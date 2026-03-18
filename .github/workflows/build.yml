@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install deps
         run: |
-          pacman -Syu --noconfirm base-devel git clang lld wasi-compiler-rt wasi-libc wasi-libc++ wasi-libc++abi \
+          pacman -Syu --noconfirm base-devel git clang lld \
             alsa-lib at-spi2-core cairo ffmpeg fontconfig freetype2 \
             gdk-pixbuf2 gtk3 hicolor-icon-theme libpulse libx11 libxcb libxcomposite \
             libxdamage libxext libxfixes libxrandr libxss libxt mime-types nspr nss pango \
@@ -20,7 +20,7 @@ jobs:
           for pkg in packages/*/; do
             if [ -f "$pkg/PKGBUILD" ]; then
               sed -i '/--with-wasi-sysroot/d' "$pkg/PKGBUILD"
-              sed -i '/--without-wasm-sandboxed-libraries/d' "$pkg/PKGBUILD"
+              sed -i 's/ac_add_options --disable-tests/ac_add_options --disable-tests\nac_add_options --without-wasm-sandboxed-libraries/' "$pkg/PKGBUILD"
             fi
           done
       - name: Build packages
