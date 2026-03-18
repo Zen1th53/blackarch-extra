@@ -1,0 +1,29 @@
+name: Build and Publish Repo
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: pacman -Syu --noconfirm base-devel git
+      - name: Build packages
+        run: |
+          useradd -m builder
+          for pkg in packages/*/; do
+            cp -r $pkg /home/builder/
+            pkgname=$(basename $pkg)
+            chown -R builder /home/builder/$pkgname
+            su builder -c "cd /home/builder/$pkgname && makepkg -s --noconfirm"
+            cp /home/builder/$pkgname/*.pkg.tar.zst ./
+          done
+      - name: Create repo database
+        run: repo-add blackarch-extra.db.tar.gz *.pkg.tar.zst
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
