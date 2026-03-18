@@ -9,15 +9,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
-        run: pacman -Syu --noconfirm base-devel git
+        run: |
+          pacman -Syu --noconfirm base-devel git
+          pacman -S --noconfirm alsa-lib at-spi2-core cairo ffmpeg fontconfig freetype2 \
+            gdk-pixbuf2 gtk3 hicolor-icon-theme libpulse libx11 libxcb libxcomposite \
+            libxdamage libxext libxfixes libxrandr libxss libxt mime-types nspr nss pango \
+            ttf-dejavu
       - name: Build packages
         run: |
           useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
           for pkg in packages/*/; do
             cp -r $pkg /home/builder/
             pkgname=$(basename $pkg)
             chown -R builder /home/builder/$pkgname
-            su builder -c "cd /home/builder/$pkgname && makepkg -s --noconfirm"
+            su builder -c "cd /home/builder/$pkgname && makepkg -s --noconfirm --skippgpcheck"
             cp /home/builder/$pkgname/*.pkg.tar.zst ./
           done
       - name: Create repo database
