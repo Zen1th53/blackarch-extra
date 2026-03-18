@@ -15,19 +15,12 @@ jobs:
             gdk-pixbuf2 gtk3 hicolor-icon-theme libpulse libx11 libxcb libxcomposite \
             libxdamage libxext libxfixes libxrandr libxss libxt mime-types nspr nss pango \
             ttf-dejavu nasm rust cbindgen nodejs python python-setuptools
-      - name: Fix wasi target
-        run: |
-          clang_ver=$(clang --version | head -1 | grep -oP '\d+\.\d+\.\d+')
-          wasi_dir="/usr/lib/clang/$clang_ver/lib/wasi"
-          mkdir -p $wasi_dir
-          find /usr/lib/clang -name "*.a" | grep wasi | xargs -I{} cp {} $wasi_dir/ 2>/dev/null || true
-          sed -i 's/wasm32-wasi/wasm32-wasip1/g' /usr/share/wasi-sysroot/lib/wasm32-wasi/libcrt1.a 2>/dev/null || true
-          ln -sf /usr/share/wasi-sysroot/lib/wasm32-wasi /usr/share/wasi-sysroot/lib/wasm32-wasip1 2>/dev/null || true
       - name: Patch PKGBUILD mozconfig
         run: |
           for pkg in packages/*/; do
             if [ -f "$pkg/PKGBUILD" ]; then
-              sed -i 's|--with-wasi-sysroot=/usr/share/wasi-sysroot|--with-wasi-sysroot=/usr/share/wasi-sysroot\nac_add_options --without-wasm-sandboxed-libraries|g' "$pkg/PKGBUILD"
+              sed -i '/--with-wasi-sysroot/d' "$pkg/PKGBUILD"
+              sed -i '/--without-wasm-sandboxed-libraries/d' "$pkg/PKGBUILD"
             fi
           done
       - name: Build packages
